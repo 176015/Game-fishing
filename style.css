@@ -1,0 +1,30 @@
+#pond {
+  position: relative;
+  width: 600px;
+  height: 150px;
+  border: 3px solid #0077cc;
+  margin: 20px auto;
+  background-color: #a0e0ff;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+#swimmingFish {
+  position: absolute;
+  top: 60px;
+  left: -50px;
+  width: 50px;
+  transition: left 0.1s linear;
+  cursor: pointer;
+}
+
+#catchZone {
+  position: absolute;
+  top: 0;
+  left: 250px;
+  width: 100px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 2px dashed red;
+  pointer-events: none;
+}
