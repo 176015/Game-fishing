@@ -1,19 +1,224 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Fishing Game</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fun Fishing Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #e0f7fa;
+    }
+
+    #pond {
+      position: relative;
+      width: 600px;
+      height: 150px;
+      border: 3px solid #0077cc;
+      margin: 20px auto;
+      background-color: #a0e0ff;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+
+    #swimmingFish {
+      position: absolute;
+      top: 60px;
+      left: -50px;
+      width: 50px;
+      transition: left 0.1s linear;
+      cursor: pointer;
+    }
+
+    #catchZone {
+      position: absolute;
+      top: 0;
+      left: 250px;
+      width: 100px;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.3);
+      border: 2px dashed red;
+      pointer-events: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      background-color: #29b6f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0288d1;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    #lastFish {
+      font-weight: bold;
+    }
+
+    @keyframes flashGreen {
+      0%   { background-color: #a0e0ff; }
+      50%  { background-color: #a8f5a8; }
+      100% { background-color: #a0e0ff; }
+    }
+
+    .flash {
+      animation: flashGreen 0.3s;
+    }
+  </style>
 </head>
 <body>
   <h1>🎣 Fishing Game</h1>
-  <p>Fish caught: <span id="fishCount">0</span></p>
+  <p>Money: $<span id="moneyCount">0</span></p>
+  <p>Catch chance: <span id="catchChanceDisplay">30</span>%</p>
 
-  <button id="fishButton">Catch Fish</button>
+  <div id="pond">
+    <div id="catchZone"></div>
+    <img src="myfish.png" id="swimmingFish" alt="Fish" />
+  </div>
 
-  <h2>Upgrades</h2>
-  <button id="upgradeButton">Upgrade Rod (Cost: <span id="upgradeCost">10</span>)</button>
-  <p>Fish per click: <span id="fishPerClick">1</span></p>
+  <h2 id="lastFish">You caught: None</h2>
 
-  <script src="script.js"></script>
+  <h2>Rod Upgrades</h2>
+  <button id="upgradeButton">
+    Upgrade Rod (Cost: <span id="upgradeCost">10</span>)
+  </button>
+
+  <script>
+    let money = 0;
+    let catchChance = 30;
+    let upgradeCost = 10;
+    let bonusActive = false;
+
+    const moneyCountEl = document.getElementById('moneyCount');
+    const catchChanceDisplay = document.getElementById('catchChanceDisplay');
+    const upgradeCostEl = document.getElementById('upgradeCost');
+    const lastFishEl = document.getElementById('lastFish');
+
+    const swimmingFish = document.getElementById('swimmingFish');
+    const catchZone = document.getElementById('catchZone');
+    const pond = document.getElementById('pond');
+
+    const fishTable = [
+      { name: "Bluegill", chance: 60, value: 1 },
+      { name: "Bass", chance: 10, value: 2 },
+      { name: "Koi", chance: 5, value: 3 },
+      { name: "Catfish", chance: 2, value: 5 },
+      { name: "Shark", chance: 1, value: 50 },
+      { name: "Megalodon", chance: 0.05, value: 700 },
+      { name: "Boot", chance: 8, value: 0 },
+      { name: "Old Can", chance: 5, value: -1 },
+      { name: "Goldfish With Sunglasses", chance: 1, value: 20 },
+      { name: "Treasure Chest", chance: 0.3, value: 100 },
+      { name: "Derp Fish", chance: 2, value: 4 },
+      { name: "Exploding Fish", chance: 0.5, value: -10 }
+    ];
+
+    function getRandomFish() {
+      if (Math.random() < 0.01 && !bonusActive) {
+        startFishingFestival();
+      }
+
+      const rand = Math.random() * 100;
+      let total = 0;
+      for (let fish of fishTable) {
+        total += fish.chance;
+        if (rand < total) return fish;
+      }
+      return { name: "Seaweed", value: 0 };
+    }
+
+    function startFishingFestival() {
+      bonusActive = true;
+      document.body.style.backgroundColor = "#fff9c4";
+      alert("🎉 Fishing Festival! 2x money for 10 seconds!");
+      setTimeout(() => {
+        bonusActive = false;
+        document.body.style.backgroundColor = "#e0f7fa";
+      }, 10000);
+    }
+
+    let fishX = -50;
+    let fishSpeed = getRandomSpeed();
+
+    function getRandomSpeed() {
+      return Math.random() * 2 + 1;
+    }
+
+    function animateFish() {
+      fishX += fishSpeed;
+      if (fishX > 650) {
+        fishX = -50;
+        fishSpeed = getRandomSpeed();
+      }
+      swimmingFish.style.left = fishX + "px";
+      requestAnimationFrame(animateFish);
+    }
+
+    swimmingFish.addEventListener('click', () => {
+      const fishRect = swimmingFish.getBoundingClientRect();
+      const zoneRect = catchZone.getBoundingClientRect();
+
+      const isInZone =
+        fishRect.left + fishRect.width / 2 > zoneRect.left &&
+        fishRect.left + fishRect.width / 2 < zoneRect.right;
+
+      if (isInZone) {
+        pond.classList.add('flash');
+        setTimeout(() => pond.classList.remove('flash'), 300);
+
+        const chanceRoll = Math.random() * 100;
+        if (chanceRoll <= catchChance) {
+          const fish = getRandomFish();
+          let reward = fish.value;
+          if (bonusActive) reward *= 2;
+          money += reward;
+          lastFishEl.textContent = `You caught a ${fish.name}! ${reward >= 0 ? '+' : ''}$${reward}`;
+
+          if (fish.name === "Treasure Chest") {
+            alert("🎉 You found a Treasure Chest full of gold!");
+          } else if (fish.name === "Exploding Fish") {
+            alert("💥 Oh no! The fish exploded! You lost money!");
+          } else if (fish.name === "Goldfish With Sunglasses") {
+            alert("😎 That's one cool fish.");
+          }
+        } else {
+          lastFishEl.textContent = "The fish got away...";
+        }
+      } else {
+        lastFishEl.textContent = "Missed!";
+      }
+
+      updateDisplay();
+    });
+
+    document.getElementById('upgradeButton').addEventListener('click', () => {
+      if (money >= upgradeCost) {
+        money -= upgradeCost;
+        catchChance = Math.min(catchChance + 10, 100);
+        upgradeCost = Math.floor(upgradeCost * 1.7);
+        updateDisplay();
+      } else {
+        alert("Not enough money!");
+      }
+    });
+
+    function updateDisplay() {
+      moneyCountEl.textContent = money;
+      catchChanceDisplay.textContent = catchChance;
+      upgradeCostEl.textContent = upgradeCost;
+    }
+
+    animateFish();
+  </script>
 </body>
 </html>
